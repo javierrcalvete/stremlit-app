@@ -2,72 +2,77 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.figure_factory as ff
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
 
-st.sidebar.header('Retails app')
 
-st.title("hello world")
+
+st.title("Top")
 
 st.header('This is a header with divider', divider='rainbow')
 
 st.markdown("this is with markdown")
 
-
-
-
-
-x = st.slider('choose an x value', 1, 10)
-
-st.write('value of :red[x] is', x)
-
-st.subheader('area chart')
-
-col1, col2 = st.columns(2)
-
-chart_data = pd.DataFrame(
-    {
-        "col1": np.random.randn(20),
-        "col2": np.random.randn(20),
-        "col3": np.random.choice(["A", "B", "C"], 20),
-    }
-)
-
-with col1:
-
-    st.dataframe(chart_data,)
-
-with col2:
-    
-    st.area_chart(chart_data, x="col1", y="col2", color="col3")
-
-st.subheader('math')
-
-st.latex(r'''
-    a + ar + a r^2 + a r^3 + \cdots + a r^{n-1} =
-    \sum_{k=0}^{n-1} ar^k =
-    a \left(\frac{1-r^{n}}{1-r}\right)
-    ''')
-
-st.divider()
-
-
-
-
-# Cache the histogram data
+# Caching function to load data
 @st.cache_data
-def generate_histogram():
-    x1 = np.random.randn(200) - 2
-    x2 = np.random.randn(200)
-    x3 = np.random.randn(200) + 2
+def load_data(url):
+    df = pd.read_csv(url)
+    return df
 
-    hist_data = [x1, x2, x3]
-    group_labels = ['Group 1', 'Group 2', 'Group 3']
-    
-    fig = ff.create_distplot(hist_data, group_labels, bin_size=[.1, .25, .5])
+# Caching function to prepare and sort data
+@st.cache_data
+def prepare_data(df):
+    # Sort DataFrame by Total_Purchases in descending order and select the top 10
+    df_sorted = df.sort_values(by='Total_Purchases', ascending=False).head(10)
+
+    # Sample and aggregate data
+    sample_size = 1000  # Adjust this value based on your needs
+    df_sampled = df.sample(n=sample_size, random_state=1)
+    df_aggregated = df_sampled.groupby('Country').agg({'Total_Purchases': 'sum'}).reset_index()
+
+    return df_sorted, df_aggregated
+
+# Caching function to create the pie chart
+@st.cache_data
+def create_pie_chart(df_aggregated):
+    # Define custom color sequence for pie chart
+    pie_colors = px.colors.diverging.RdBu
+
+    # Create a Pie chart with custom colors
+    fig = px.pie(df_aggregated, names='Country', values='Total_Purchases',
+                 title='Total Purchases by Country (Custom Pie Colors)',
+                 color='Country',  # Color slices based on Country
+                 color_discrete_sequence=pie_colors)  # Use custom colors
+
     return fig
 
-# Display the histogram
-st.subheader('Histogram')
-if 'histogram_fig' not in st.session_state:
-    st.session_state.histogram_fig = generate_histogram()
+# Main Streamlit app
+def main():
+    st.title('Pie Chart Example with Streamlit')
 
-st.plotly_chart(st.session_state.histogram_fig, use_container_width=True)
+        # Button to refresh/uncache data
+  
+    # Display a loading spinner while loading data
+    with st.spinner('Loading data...'):
+        df = load_data('data/new_retail_data.zipLimpiado.zip')
+    
+    # Display data in a dataframe
+    st.dataframe(df)
+    
+    # Prepare and cache data
+    with st.spinner('Preparing data and generating pie chart...'):
+        df_sorted, df_aggregated = prepare_data(df)
+        fig = create_pie_chart(df_aggregated)
+    
+    # Show the plot
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Optional: Display sorted data (for debugging or additional context)
+    st.subheader('Top 10 Countries by Total Purchases')
+    st.dataframe(df_sorted)
+
+ 
+
+if __name__ == "__main__":
+    main()
