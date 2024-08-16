@@ -33,7 +33,7 @@ def load_data():
 total_purchases_per_country = load_data()
 
 # Display the data in the app
-st.dataframe(total_purchases_per_country)
+st.table(total_purchases_per_country)
 
 # Create a bar chart using Plotly Express
 fig = px.bar(total_purchases_per_country, 
