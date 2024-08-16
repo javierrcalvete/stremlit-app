@@ -51,7 +51,9 @@ selected_countries = st.multiselect(
 filtered_data = total_purchases_per_country.loc[selected_countries]
 
 # Create a bar chart using Plotly Express
-fig = px.bar(filtered_data, 
+@st.fragment
+def chart():
+    fig = px.bar(filtered_data, 
              x=filtered_data.index, 
              y='Total_Purchases', 
              color=filtered_data.index,
@@ -59,9 +61,8 @@ fig = px.bar(filtered_data,
              title='Total Purchases Per Country',
              labels={'Total_Purchases': 'Total Purchase Amount'},
              text='Total_Purchases')
-
 # Customize layout
-fig.update_layout(
+    fig.update_layout(
     # xaxis_title='Country', 
     # yaxis_title='Total Purchase',
     xaxis_tickangle=-45,  # Rotate x-axis labels for better readability
@@ -69,7 +70,9 @@ fig.update_layout(
         autorange=True  # Ensure y-axis is auto-scaled to fit the data
     ),
     showlegend=False  # Hide the legend
-)
-
+    )
 # Show the figure in the Streamlit app
-st.plotly_chart(fig)
+    st.plotly_chart(fig)
+
+chart()
+
